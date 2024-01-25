@@ -1,0 +1,25 @@
+#!/bin/bash
+
+random_number=$((RANDOM % (10000 - 1000 + 1) + 1000))
+
+while IFS=, read cn sn userPassword; do
+    dn="uid=$uid,ou=users,dc=mangoflame,dc=com"
+    cat << EOF > userlist.ldif
+dn: $dn
+cn: $cn
+gidNumber: 1000
+homeDirectory: /home
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+sn: $cn
+uid=$cn$random_number
+uidNumber=$random_number
+userPassword: $userPassword
+EOF
+
+    # Use ldapmodify to add the entry to the LDAP directory
+    docker exec mangoflame ldapmodify -x -H ldap://192.168.114.129:1389 -D "cn=ldap_admin,dc=mangoflame,dc=com" -W -f userlist.ldif
+
+done < anvandarimport.csv
